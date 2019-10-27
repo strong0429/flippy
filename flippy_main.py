@@ -31,14 +31,20 @@ def main():
     else:
         NETWORK = False
 
+    tile = 'W'
+    tiles = ['W', 'B']
     board = Chessboard(game_wnd)
 
     clock = pygame.time.Clock()
+    pygame.event.clear()
     while True:
         for event in pygame.event.get():
             if event.type == QUIT:
-                sys.exit(0)
-        
+                return
+            if event.type == MOUSEBUTTONUP:
+                board.set_tile(event.pos[0], event.pos[1], tile)
+                tile = tiles[tile=='W']
+
         game_wnd.blit(bg_img, (0, 0))
 
         board.draw_board()
