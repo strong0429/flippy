@@ -31,7 +31,7 @@ def main():
     else:
         NETWORK = False
 
-    board = Chessboard()
+    board = Chessboard(game_wnd)
 
     clock = pygame.time.Clock()
     while True:
@@ -41,8 +41,8 @@ def main():
         
         game_wnd.blit(bg_img, (0, 0))
 
-        board.draw_board(game_wnd)
-        
+        board.draw_board()
+
         pygame.display.update()
         
         clock.tick(FPS)

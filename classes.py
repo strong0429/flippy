@@ -8,10 +8,11 @@ BOARDLINECOLOR = (0, 0, 0)
 # 棋盘类：Chessboard
 class Chessboard():
 
-    def __init__(self, size=50, rows=8, cols=8):
+    def __init__(self, wnd, size=50, rows=8, cols=8):
         self.cell_size = size     # 棋盘格的大小
         self.cell_rows = rows      # 棋盘格的行数
         self.cell_cols = cols      # 棋盘格的列数
+        self.main_wnd = wnd
 
         # self.cells = [['N'] * self.cell_cols for _ in range(self.cell_rows)]
         self.cells = []
@@ -27,6 +28,7 @@ class Chessboard():
         self.rect = pygame.Rect(0, 0, \
             self.cell_size * self.cell_cols + 1, \
             self.cell_size * self.cell_rows + 1)
+        self.rect.center = self.main_wnd.get_rect().center
         
         self.surface = pygame.Surface((self.rect.w, self.rect.h))
         self.bg_img = pygame.image.load('flippyboard.png')
@@ -63,13 +65,18 @@ class Chessboard():
                 elif cell == 'B':
                     pygame.draw.circle(self.surface, BLACK, (circlex, circley), r)
 
-    def draw_board(self, game_wnd):
+    def draw_board(self):
         self.surface.fill(BLACK)
         self.surface.blit(self.bg_img, (0, 0))
         self.draw_cells()
+        self.main_wnd.blit(self.surface, self.rect)
 
-        rect = game_wnd.get_rect()
-        self.rect.center = rect.center
-        game_wnd.blit(self.surface, self.rect)
-
+    def is_valide(self, x, y):
+        if x < self.rect.x or x > self.rect.x + self.rect.w or \
+            y < self.rect.y or y > self.rect.y + self.rect.h:
+            return False
+            
+        cellx = x - self.rect.x
+        celly = y - self.rect.y
+        pass
     
