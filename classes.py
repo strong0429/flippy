@@ -13,7 +13,10 @@ class Chessboard():
         self.cell_rows = rows      # 棋盘格的行数
         self.cell_cols = cols      # 棋盘格的列数
 
-        self.cells = [['N'] * self.cell_cols for _ in range(self.cell_rows)]
+        # self.cells = [['N'] * self.cell_cols for _ in range(self.cell_rows)]
+        self.cells = []
+        for _ in range(self.cell_rows):
+            self.cells.append(['N'] * self.cell_cols)
         startx = self.cell_cols // 2 - 1
         starty = self.cell_rows // 2 - 1
         self.cells[startx][starty] = 'W'
