@@ -31,8 +31,10 @@ def main():
     else:
         NETWORK = False
 
-    tile = 'W'
     tiles = ['W', 'B']
+    turn = random.choice(tiles)
+    player = random.choice(tiles)
+
     board = Chessboard(game_wnd)
 
     clock = pygame.time.Clock()
@@ -41,9 +43,21 @@ def main():
         for event in pygame.event.get():
             if event.type == QUIT:
                 return
-            if event.type == MOUSEBUTTONUP:
-                board.set_tile(event.pos[0], event.pos[1], tile)
-                tile = tiles[tile=='W']
+        
+        if turn == player:
+            if not board.get_valid_cells(player):
+                gui.msgbox('比赛结束', '翻转棋')
+                return
+            for event in pygame.event.get():
+                if event.type == MOUSEBUTTONUP:
+                    if board.set_tile(event.pos[0], event.pos[1], plyer):
+                        turn = tiles[turn=='W']
+        else:
+            if not board.get_valid_cells(tiles[player=='W']):
+                gui.msgbox('比赛结束(AI)', '翻转棋')
+                return
+            board.set_tile_AI(tiles[player=='W'])
+            turn = tiles[turn=='W']
 
         game_wnd.blit(bg_img, (0, 0))
 

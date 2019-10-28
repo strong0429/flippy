@@ -15,10 +15,13 @@ class Chessboard():
         self.cell_cols = cols      # 棋盘格的列数
         self.main_wnd = wnd
 
-        # self.cells = [['N'] * self.cell_cols for _ in range(self.cell_rows)]
         self.cells = []
+        self.valid_cells = {'W':[()], 'B':[()]}
+        self.dir_step = ((1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1))
+
         for _ in range(self.cell_rows):
             self.cells.append(['N'] * self.cell_cols)
+        # self.cells = [['N'] * self.cell_cols for _ in range(self.cell_rows)]
         startx = self.cell_cols // 2 - 1
         starty = self.cell_rows // 2 - 1
         self.cells[startx][starty] = 'W'
@@ -72,10 +75,9 @@ class Chessboard():
         self.draw_tiles()
         self.main_wnd.blit(self.surface, self.rect)
 
-    def is_valide(self, row, col, tile):
-        tiles_to_flip = []
-        dir_step = [(1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)]
-        for x_step, y_step in dir_step:
+    def get_tiles_to_flip(self, row, col, color):
+        tiles = []
+        for x_step, y_step in self.dir_step:
             nxt_row, nxt_col = row, col
             tmp_tiles = []  # 待确认翻转棋子
             while True:
@@ -87,30 +89,69 @@ class Chessboard():
                     self.cells[nxt_row][nxt_col] == 'N':
                     break
                 # 己方棋子，封闭，添加到待翻转棋子列表
-                if self.cells[nxt_row][nxt_col] == tile:
-                    tiles_to_flip += tmp_tiles
+                if self.cells[nxt_row][nxt_col] == color:
+                    tiles += tmp_tiles
                     break
                 # 对方棋子，添加到待确认列表
                 tmp_tiles.append((nxt_row, nxt_col))
-        return tiles_to_flip
+        return tiles
 
+    def is_valid(self, row, col, tile):
+        valid = False
+        for x_step, y_step in self.dir_step:
+            nxt_row, nxt_col = row, col
+            while True:
+                # 当前方向移动一步
+                nxt_row += y_step
+                nxt_col += x_step
+                # 超出棋盘或空位，未封闭，放弃待确认棋子
+                if not (0 <= nxt_row < self.cell_rows and \
+                    0 <= nxt_col < self.cell_cols) or \
+                    self.cells[nxt_row][nxt_col] == 'N':
+                    valid = False
+                    break
+                # 己方棋子，封闭，添加到待翻转棋子列表
+                if self.cells[nxt_row][nxt_col] == tile:
+                    break
+                # 对方棋子，valid置未True
+                valid = True
+        return valid
 
-    def set_tile(self, x, y, tile):
-        #判断x，y坐标是否在棋盘内
-        if not (self.rect.x < x < self.rect.x + self.rect.w and \
-            self.rect.y < y < self.rect.y + self.rect.h):
-            return
+    def get_valid_cells(self, color):
+        valid_cells = []
+        for row in range(self.cell_rows):
+            for col in range(self.cell_cols):
+                if self.cells[row][col] != 'N':
+                    continue
+                if self.is_valid(row, col, color):
+                    valid_cells.append((row, col))
+        self.valid_cells[color] = valid_cells
+        return valid_cells
+
+    def set_tile(self, x, y, color):
         # 去除左边和顶部空白    
         cellx = x - self.rect.x
         celly = y - self.rect.y
-        # 坐标转换为行、列
+        # 坐标转换为棋盘的行、列
         row = celly // self.cell_size
         col = cellx // self.cell_size
         # 是否有效位置
-        tiles_to_flip = self.is_valide(row, col, tile)
-        if tiles_to_flip:
-            self.cells[row][col] = tile
-            for row, col in tiles_to_flip:
-                self.cells[row][col] = tile
+        if (row, col) not in self.valid_cells[color]:
+            return False
+
+        self.cells[row][col] = color
+        tiles_to_flip = self.get_tiles_to_flip(row, col, color)
+        for row, col in tiles_to_flip:
+            self.cells[row][col] = color
+        return True
+
+    def set_tile_AI(self, color):
+        # 随机选择一个有效位置
+        row, col = random.choice(self.valid_cells[color])
+        self.cells[row][col] = color
+
+        tiles_to_flip = self.get_tiles_to_flip(row, col, color)
+        for row, col in tiles_to_flip:
+            self.cells[row][col] = color
 
 
