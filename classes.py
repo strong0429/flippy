@@ -2,7 +2,7 @@
 import pygame
 import random
 
-BLACK = (50, 50, 50)
+BLACK = (60, 60, 60)
 WHITE = (255, 255, 255)
 BOARDLINECOLOR = (0, 0, 0)
 
@@ -10,35 +10,35 @@ BOARDLINECOLOR = (0, 0, 0)
 class Chessboard():
 
     def __init__(self, wnd, size=50, rows=8, cols=8):
-        self.cell_size = size     # 棋盘格的大小
+        self.main_wnd = wnd        # 游戏主窗口
+        self.cell_size = size      # 棋盘格的大小
         self.cell_rows = rows      # 棋盘格的行数
         self.cell_cols = cols      # 棋盘格的列数
-        self.main_wnd = wnd
+        self.r_tile = size//2 - 4  # 棋子半径
 
-        self.cells = []
+        # 记录棋盘格状态：'W': 白方，'B'：黑方，'N': 未落子
+        self.cells = [[],[],] 
+        # 记录双方当前有效的落子位置
         self.valid_cells = {'W':[()], 'B':[()]}
+        # 记录待翻转棋子列表，元素为棋盘行列元组（row，col)   
+        self.tiles_to_flip = [(),]
+        # 棋子在棋盘上的八个移动方向步长
         self.dir_step = ((1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1))
 
-        for _ in range(self.cell_rows):
-            self.cells.append(['N'] * self.cell_cols)
-        # self.cells = [['N'] * self.cell_cols for _ in range(self.cell_rows)]
-        startx = self.cell_cols // 2 - 1
-        starty = self.cell_rows // 2 - 1
-        self.cells[startx][starty] = 'W'
-        self.cells[startx][starty + 1] = 'B'
-        self.cells[startx + 1][starty] = 'B'
-        self.cells[startx + 1][starty + 1] = 'W'
+        self.init_cells()
 
+        # Rect，记录棋盘的大小及在主窗口的位置
         self.rect = pygame.Rect(0, 0, \
             self.cell_size * self.cell_cols + 1, \
             self.cell_size * self.cell_rows + 1)
         self.rect.center = self.main_wnd.get_rect().center
-        
+
+        # 创建棋盘画布，绘制棋盘背景、网格、棋子
         self.surface = pygame.Surface((self.rect.w, self.rect.h))
+        # 加载棋盘背景图
         self.bg_img = pygame.image.load('flippyboard.png')
         self.bg_img = pygame.transform.smoothscale( \
             self.bg_img, (self.rect.w, self.rect.h))
-        
         # 直接在背景图上画棋盘网格线：水平线
         for row in range(self.cell_rows + 1):
             startx = 0
@@ -56,24 +56,59 @@ class Chessboard():
             pygame.draw.line(self.bg_img, BOARDLINECOLOR, \
                 (startx, starty), (endx, endy))
 
-    def draw_tiles(self):
-        r = self.cell_size // 2 - 3
+    # 初始化棋盘格
+    def init_cells(self):
+        self.tiles_to_flip.clear()
+        # self.valid_cells.clear()
+        self.cells.clear()
+
+        # 创建并初始化棋盘格
+        for _ in range(self.cell_rows):
+            self.cells.append(['N'] * self.cell_cols)
+        # self.cells = [['N'] * self.cell_cols for _ in range(self.cell_rows)]
+        startx = self.cell_cols // 2 - 1
+        starty = self.cell_rows // 2 - 1
+        self.cells[startx][starty] = 'W'
+        self.cells[startx][starty + 1] = 'B'
+        self.cells[startx + 1][starty] = 'B'
+        self.cells[startx + 1][starty + 1] = 'W'
+
+    def draw_tile(self, row, col):
+        # 确定棋子圆心坐标
+        circlex = self.cell_size * col + self.cell_size // 2
+        circley = self.cell_size * row + self.cell_size // 2
+        # 在棋盘画布上画棋子：黑/白实心圆
+        if self.cells[row][col] == 'W':
+            pygame.draw.circle(self.surface, WHITE, (circlex, circley), self.r_tile)
+        elif self.cells[row][col] == 'B':
+            pygame.draw.circle(self.surface, BLACK, (circlex, circley), self.r_tile)
+
+    def draw_board(self):
+        # 用黑色覆盖棋盘画布
+        self.surface.fill(BLACK)
+        # 绘制背景和网格线
+        self.surface.blit(self.bg_img, (0, 0))
+        # 绘制棋子
         for row, cells in enumerate(self.cells):
             for col, cell in enumerate(cells):
                 if cell == 'N':
                     continue
-                circlex = self.cell_size * col + self.cell_size // 2
-                circley = self.cell_size * row + self.cell_size // 2
-                if cell == 'W':
-                    pygame.draw.circle(self.surface, WHITE, (circlex, circley), r)
-                elif cell == 'B':
-                    pygame.draw.circle(self.surface, BLACK, (circlex, circley), r)
-
-    def draw_board(self):
-        self.surface.fill(BLACK)
-        self.surface.blit(self.bg_img, (0, 0))
-        self.draw_tiles()
+                self.draw_tile(row, col)
+        # 棋盘画布绘制到主窗口
         self.main_wnd.blit(self.surface, self.rect)
+        # 翻转棋子（动画效果）
+        if self.tiles_to_flip:
+            for _ in range(4):
+                pygame.display.update()
+                pygame.time.wait(200)
+                for row, col in self.tiles_to_flip:
+                    if self.cells[row][col] == 'W':
+                        self.cells[row][col] = 'B'
+                    elif self.cells[row][col] == 'B':
+                        self.cells[row][col] = 'W'
+                    self.draw_tile(row, col)
+                self.main_wnd.blit(self.surface, self.rect)
+            self.tiles_to_flip = []
 
     def get_tiles_to_flip(self, row, col, color):
         tiles = []
@@ -115,18 +150,9 @@ class Chessboard():
                     break
                 # 对方棋子，valid置未True
                 valid = True
+            if valid == True:
+                break
         return valid
-
-    def get_valid_cells(self, color):
-        valid_cells = []
-        for row in range(self.cell_rows):
-            for col in range(self.cell_cols):
-                if self.cells[row][col] != 'N':
-                    continue
-                if self.is_valid(row, col, color):
-                    valid_cells.append((row, col))
-        self.valid_cells[color] = valid_cells
-        return valid_cells
 
     def set_tile(self, x, y, color):
         # 去除左边和顶部空白    
@@ -140,18 +166,36 @@ class Chessboard():
             return False
 
         self.cells[row][col] = color
-        tiles_to_flip = self.get_tiles_to_flip(row, col, color)
-        for row, col in tiles_to_flip:
+        self.tiles_to_flip = self.get_tiles_to_flip(row, col, color)
+        for row, col in self.tiles_to_flip:
             self.cells[row][col] = color
         return True
+
+    def get_valid_cells(self, color):
+        valid_cells = []
+        for row in range(self.cell_rows):
+            for col in range(self.cell_cols):
+                if self.cells[row][col] != 'N':
+                    continue
+                if self.is_valid(row, col, color):
+                    valid_cells.append((row, col))
+        self.valid_cells[color] = valid_cells
+        return valid_cells
 
     def set_tile_AI(self, color):
         # 随机选择一个有效位置
         row, col = random.choice(self.valid_cells[color])
         self.cells[row][col] = color
 
-        tiles_to_flip = self.get_tiles_to_flip(row, col, color)
-        for row, col in tiles_to_flip:
+        self.tiles_to_flip = self.get_tiles_to_flip(row, col, color)
+        for row, col in self.tiles_to_flip:
             self.cells[row][col] = color
+
+    def check_valid(self):
+        if self.valid_cells['W']:
+            return True
+        if self.valid_cells['B']:
+            return True
+        return False
 
 

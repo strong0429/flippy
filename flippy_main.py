@@ -34,30 +34,32 @@ def main():
     tiles = ['W', 'B']
     turn = random.choice(tiles)
     player = random.choice(tiles)
+    Ai = tiles[player=='W']
+    print(turn, player, Ai)
 
     board = Chessboard(game_wnd)
 
     clock = pygame.time.Clock()
     pygame.event.clear()
-    while True:
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                return
-        
+    while board.check_valid():
+        # 检查QUIT事件
+        if pygame.event.get(QUIT):
+            return
+
         if turn == player:
-            if not board.get_valid_cells(player):
-                gui.msgbox('比赛结束', '翻转棋')
-                return
-            for event in pygame.event.get():
-                if event.type == MOUSEBUTTONUP:
-                    if board.set_tile(event.pos[0], event.pos[1], plyer):
-                        turn = tiles[turn=='W']
+            if board.get_valid_cells(player):
+                events = pygame.event.get(MOUSEBUTTONUP)
+                if not events:
+                    continue
+                if board.set_tile(events[0].pos[0], events[0].pos[1], player):
+                    turn = Ai
+            else:
+                turn = Ai
         else:
-            if not board.get_valid_cells(tiles[player=='W']):
-                gui.msgbox('比赛结束(AI)', '翻转棋')
-                return
-            board.set_tile_AI(tiles[player=='W'])
-            turn = tiles[turn=='W']
+            pygame.time.wait(500)
+            if board.get_valid_cells(Ai):
+                board.set_tile_AI(Ai)
+            turn = player
 
         game_wnd.blit(bg_img, (0, 0))
 
@@ -66,6 +68,8 @@ def main():
         pygame.display.update()
         
         clock.tick(FPS)
+    print('game over')
+    # gui.msgbox('比赛结束')
 
 
 # 游戏入口
