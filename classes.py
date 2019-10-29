@@ -8,7 +8,7 @@ BOARDLINECOLOR = (0, 0, 0)
 
 # 棋盘类：Chessboard
 class Chessboard():
-
+    # tiles = {'H': }
     def __init__(self, wnd, size=50, rows=8, cols=8):
         self.main_wnd = wnd        # 游戏主窗口
         self.cell_size = size      # 棋盘格的大小
@@ -131,6 +131,7 @@ class Chessboard():
                 tmp_tiles.append((nxt_row, nxt_col))
         return tiles
 
+    # 判断当前位置是否可以放置tile棋子
     def is_valid(self, row, col, tile):
         valid = False
         for x_step, y_step in self.dir_step:
@@ -154,48 +155,53 @@ class Chessboard():
                 break
         return valid
 
-    def set_tile(self, x, y, color):
-        # 去除左边和顶部空白    
-        cellx = x - self.rect.x
-        celly = y - self.rect.y
-        # 坐标转换为棋盘的行、列
-        row = celly // self.cell_size
-        col = cellx // self.cell_size
+    # player走棋
+    def set_tile(self, x, y, tile):
+        # 去除左边和顶部空白后，转换为棋盘的行、列   
+        row = (y - self.rect.y) // self.cell_size
+        col = (x - self.rect.x) // self.cell_size
         # 是否有效位置
-        if (row, col) not in self.valid_cells[color]:
+        if (row, col) not in self.valid_cells[tile]:
             return False
-
-        self.cells[row][col] = color
-        self.tiles_to_flip = self.get_tiles_to_flip(row, col, color)
+        # 翻转对方棋子
+        self.cells[row][col] = tile
+        self.tiles_to_flip = self.get_tiles_to_flip(row, col, tile)
         for row, col in self.tiles_to_flip:
-            self.cells[row][col] = color
+            self.cells[row][col] = tile
         return True
 
-    def get_valid_cells(self, color):
+    # 获取指定颜色棋子当前所有可落子格子
+    def get_valid_cells(self, tile):
         valid_cells = []
         for row in range(self.cell_rows):
             for col in range(self.cell_cols):
                 if self.cells[row][col] != 'N':
                     continue
-                if self.is_valid(row, col, color):
+                if self.is_valid(row, col, tile):
                     valid_cells.append((row, col))
-        self.valid_cells[color] = valid_cells
+        self.valid_cells[tile] = valid_cells
         return valid_cells
 
-    def set_tile_AI(self, color):
+    # 计算机走棋
+    def set_tile_AI(self, tile):
         # 随机选择一个有效位置
-        row, col = random.choice(self.valid_cells[color])
-        self.cells[row][col] = color
-
-        self.tiles_to_flip = self.get_tiles_to_flip(row, col, color)
+        row, col = random.choice(self.valid_cells[tile])
+        self.cells[row][col] = tile
+        # 翻转对方棋子
+        self.tiles_to_flip = self.get_tiles_to_flip(row, col, tile)
         for row, col in self.tiles_to_flip:
-            self.cells[row][col] = color
+            self.cells[row][col] = tile
 
+    # 检查是否还有可以落子的格子，若无则比赛结束
     def check_valid(self):
-        if self.valid_cells['W']:
-            return True
-        if self.valid_cells['B']:
+        if self.valid_cells['W'] or self.valid_cells['B']:
             return True
         return False
 
-
+    # 以字典方式返回黑、白棋子的数量
+    def tile_count(self):
+        w_cell, b_cell = 0, 0
+        for cell_row in self.cells:
+            w_cell += cell_row.count('W')
+            b_cell += cell_row.count('B')
+        return {'W': w_cell, 'B': b_cell}

@@ -18,7 +18,7 @@ def main():
     pygame.display.set_caption('翻转棋')
 
     # 加载窗口背景图案
-    bg_img = pygame.image.load('flippybackground.png')
+    bg_img = pygame.image.load('board.jpg')
     bg_img = pygame.transform.smoothscale(bg_img, (WND_W, WND_H))
     game_wnd.blit(bg_img, (0, 0))
     pygame.display.update()
@@ -43,16 +43,15 @@ def main():
     pygame.event.clear()
     while board.check_valid():
         # 检查QUIT事件
-        if pygame.event.get(QUIT):
+        event = pygame.event.poll()
+        if event.type == QUIT:
             return
 
         if turn == player:
             if board.get_valid_cells(player):
-                events = pygame.event.get(MOUSEBUTTONUP)
-                if not events:
-                    continue
-                if board.set_tile(events[0].pos[0], events[0].pos[1], player):
-                    turn = Ai
+                if event.type == MOUSEBUTTONUP:
+                    if board.set_tile(event.pos[0], event.pos[1], player):
+                        turn = Ai
             else:
                 turn = Ai
         else:
@@ -60,17 +59,21 @@ def main():
             if board.get_valid_cells(Ai):
                 board.set_tile_AI(Ai)
             turn = player
+        pygame.event.clear()
 
         game_wnd.blit(bg_img, (0, 0))
-
         board.draw_board()
-
         pygame.display.update()
-        
         clock.tick(FPS)
-    print('game over')
-    # gui.msgbox('比赛结束')
 
+    tile_count = board.tile_count()
+    print(tile_count)
+    if tile_count[player] > tile_count[Ai]:
+        gui.msgbox('比赛结束, 你赢了！')
+    elif tile_count[player] == tile_count[Ai]:
+        gui.msgbox('比赛结束, 难分伯仲！')
+    else:
+        gui.msgbox('比赛结束, 你输了！')
 
 # 游戏入口
 if __name__ == '__main__':
