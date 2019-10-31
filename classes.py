@@ -1,4 +1,5 @@
-# 定义所需的类
+#--coding:utf-8--
+#定义所需的类
 import pygame
 import random
 
@@ -41,7 +42,7 @@ class Chessboard():
         self.bb_rect.y = self.rect.y
         self.bb_rect.x = self.rect.right + 10
         self.bb_surface = pygame.Surface(self.bb_rect.size)
-        self.bb_font = pygame.font.Font('freesansbold.ttf', 32)
+        self.bb_font = pygame.font.Font('STXINGKA.TTF', 40)
 
         # 创建棋盘画布，绘制棋盘背景、网格、棋子
         self.surface = pygame.Surface(self.rect.size)
@@ -218,19 +219,30 @@ class Chessboard():
 
     # 更新记分牌
     def bb_update(self, tile):
-        count = self.tile_count()[tile]
-        txt_img = self.bb_font.render(str(count), True, RED)
+        tile_count = self.tile_count()
+        txt_img = self.bb_font.render(str(tile_count[tile]), True, RED)
         txt_rect = txt_img.get_rect()
-        txt_rect.center = self.bb_rect.center
+        txt_rect.center = (self.bb_rect.w // 2, self.bb_rect.h //2)
 
         self.bb_surface.fill((180,180,180))
-        x = self.bb_rect.centerx
-        y = self.bb_rect.y + self.bb_rect.h // 6
+        x = self.bb_rect.w // 2
+        y = self.bb_rect.h // 6
         if tile == 'W':
-            pygame.draw.circle(self.bb_surface, WHITE, (x, y), 60)
+            pygame.draw.circle(self.bb_surface, WHITE, (x, y), 30)
         elif tile == 'B':
-            pygame.draw.circle(self.bb_surface, BLACK, (x, y), 60)
+            pygame.draw.circle(self.bb_surface, BLACK, (x, y), 30)
         self.bb_surface.blit(txt_img, txt_rect)
 
+        if not self.check_valid():
+            if tile_count[tile] > tile_count['B' if tile=='W' else 'W']:
+                txt_img = self.bb_font.render(u'赢了', True, RED)
+            elif tile_count[tile] < tile_count['B' if tile=='W' else 'W']:
+                txt_img = self.bb_font.render(u'输了', True, RED)
+            else:
+                txt_img = self.bb_font.render(u'平了', True, RED)
+            txt_rect = txt_img.get_rect()
+            txt_rect.center = (self.bb_rect.w // 2, self.bb_rect.h // 6 * 5)
+            self.bb_surface.blit(txt_img, txt_rect)
+        
         self.main_wnd.blit(self.bb_surface, self.bb_rect)
 

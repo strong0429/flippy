@@ -35,7 +35,6 @@ def main():
     turn = random.choice(tiles)
     player = random.choice(tiles)
     Ai = tiles[player=='W']
-    print(turn, player, Ai)
 
     board = Chessboard(game_wnd)
 
@@ -45,12 +44,13 @@ def main():
         # 检查QUIT事件
         event = pygame.event.poll()
         if event.type == QUIT:
-            return
+            break
 
         if turn == player:
             if board.get_valid_cells(player):
                 if event.type == MOUSEBUTTONUP:
-                    if board.set_tile(event.pos[0], event.pos[1], player):
+                    x, y = event.pos
+                    if board.set_tile(x, y, player):
                         turn = Ai
             else:
                 turn = Ai
@@ -66,15 +66,9 @@ def main():
         board.draw_board()
         pygame.display.update()
         clock.tick(FPS)
+    gui.msgbox('游戏结束！')
+    pygame.quit()
 
-    tile_count = board.tile_count()
-    print(tile_count)
-    if tile_count[player] > tile_count[Ai]:
-        gui.msgbox('比赛结束, 你赢了！')
-    elif tile_count[player] == tile_count[Ai]:
-        gui.msgbox('比赛结束, 难分伯仲！')
-    else:
-        gui.msgbox('比赛结束, 你输了！')
 
 # 游戏入口
 if __name__ == '__main__':
