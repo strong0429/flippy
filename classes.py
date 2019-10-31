@@ -2,6 +2,7 @@
 import pygame
 import random
 
+RED = (255, 0, 0)
 BLACK = (60, 60, 60)
 WHITE = (255, 255, 255)
 BOARDLINECOLOR = (0, 0, 0)
@@ -33,8 +34,17 @@ class Chessboard():
             self.cell_size * self.cell_rows + 1)
         self.rect.center = self.main_wnd.get_rect().center
 
+        # 创建记分牌及显示字体
+        self.bb_rect = pygame.Rect(0, 0, 0, 0)
+        self.bb_rect.h = self.rect.h
+        self.bb_rect.w = (self.main_wnd.get_rect().w - self.rect.w) // 2 - 20
+        self.bb_rect.y = self.rect.y
+        self.bb_rect.x = self.rect.right + 10
+        self.bb_surface = pygame.Surface(self.bb_rect.size)
+        self.bb_font = pygame.font.Font('freesansbold.ttf', 32)
+
         # 创建棋盘画布，绘制棋盘背景、网格、棋子
-        self.surface = pygame.Surface((self.rect.w, self.rect.h))
+        self.surface = pygame.Surface(self.rect.size)
         # 加载棋盘背景图
         self.bg_img = pygame.image.load('flippyboard.png')
         self.bg_img = pygame.transform.smoothscale( \
@@ -100,7 +110,7 @@ class Chessboard():
         if self.tiles_to_flip:
             for _ in range(4):
                 pygame.display.update()
-                pygame.time.wait(200)
+                pygame.time.wait(150)
                 for row, col in self.tiles_to_flip:
                     if self.cells[row][col] == 'W':
                         self.cells[row][col] = 'B'
@@ -205,3 +215,22 @@ class Chessboard():
             w_cell += cell_row.count('W')
             b_cell += cell_row.count('B')
         return {'W': w_cell, 'B': b_cell}
+
+    # 更新记分牌
+    def bb_update(self, tile):
+        count = self.tile_count()[tile]
+        txt_img = self.bb_font.render(str(count), True, RED)
+        txt_rect = txt_img.get_rect()
+        txt_rect.center = self.bb_rect.center
+
+        self.bb_surface.fill((180,180,180))
+        x = self.bb_rect.centerx
+        y = self.bb_rect.y + self.bb_rect.h // 6
+        if tile == 'W':
+            pygame.draw.circle(self.bb_surface, WHITE, (x, y), 60)
+        elif tile == 'B':
+            pygame.draw.circle(self.bb_surface, BLACK, (x, y), 60)
+        self.bb_surface.blit(txt_img, txt_rect)
+
+        self.main_wnd.blit(self.bb_surface, self.bb_rect)
+

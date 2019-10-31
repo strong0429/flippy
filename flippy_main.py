@@ -62,6 +62,7 @@ def main():
         pygame.event.clear()
 
         game_wnd.blit(bg_img, (0, 0))
+        board.bb_update(player)
         board.draw_board()
         pygame.display.update()
         clock.tick(FPS)
