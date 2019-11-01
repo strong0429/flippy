@@ -4,7 +4,8 @@ import sys, pygame
 import easygui as gui
 from pygame.locals import *
 
-from classes import *
+from chessboard import *
+from publib import *
 
 FPS = 15    # 每秒刷新屏幕的次数
 NETWORK = False # 是否联网
@@ -18,18 +19,12 @@ def main():
     pygame.display.set_caption('翻转棋')
 
     # 加载窗口背景图案
-    bg_img = pygame.image.load('board.jpg')
+    bg_img = pygame.image.load('flippy_bg.png')
     bg_img = pygame.transform.smoothscale(bg_img, (WND_W, WND_H))
     game_wnd.blit(bg_img, (0, 0))
     pygame.display.update()
 
     # 选择游戏模式
-    modes = ['挑战AI（单机模式）', '双人博弈（联网模式）']
-    game_mode = gui.choicebox('请选择你喜欢的游戏模式？', '游戏模式', modes)
-    if game_mode == modes[1]:
-        NETWORK = True
-    else:
-        NETWORK = False
 
     tiles = ['W', 'B']
     turn = random.choice(tiles)
@@ -40,11 +35,24 @@ def main():
 
     clock = pygame.time.Clock()
     pygame.event.clear()
-    while board.check_valid():
+    while True:
+        if not board.check_valid():
+            result = board.tile_count()
+            if result[player] > result[Ai]:
+                yes = query_box("你赢了！再来一局？", game_wnd, f_size=24)
+            elif result[player] < result[Ai]:
+                yes = query_box("你输了！再来一局？", game_wnd, f_size=24)
+            else:
+                yes = query_box("你输了！再来一局？", game_wnd, f_size=24)
+            if not yes:
+                break
+            board.init_cells()
+
         # 检查QUIT事件
         event = pygame.event.poll()
         if event.type == QUIT:
-            break
+            if query_box('确认终止比赛吗？', game_wnd, f_color=(160,0,0), f_size=30):
+                break
 
         if turn == player:
             if board.get_valid_cells(player):
@@ -62,13 +70,12 @@ def main():
         pygame.event.clear()
 
         game_wnd.blit(bg_img, (0, 0))
-        board.bb_update(player)
+        board.bb_update(player, Ai)
         board.draw_board()
         pygame.display.update()
         clock.tick(FPS)
-    gui.msgbox('游戏结束！')
-    pygame.quit()
 
+    pygame.quit()
 
 # 游戏入口
 if __name__ == '__main__':
