@@ -1,6 +1,28 @@
 #--coding:utf-8--
 
 import pygame
+import socket
+import random
+
+# 寻找玩家
+def get_server(port=9091):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    sock.settimeout(0.1)
+
+    msg = '天王盖地虎'
+    for _ in range(2):
+        sock.sendto(msg.encode('utf-8'), ('<broadcast>', port))
+        try:
+            data, address = sock.recvfrom(1024)
+            if data.decode('utf-8') == '宝塔镇河妖'
+                return address
+        except:
+            pygame.time.wait(random.choice((300, 400, 500, 600, 700)))
+            
+    sock.close()
+    return None
+
 
 # 询问框
 def query_box(msg, wnd, f_name=None, f_color=None, f_size=None):

@@ -1,7 +1,6 @@
 # Flippy游戏主程序文件
 
 import sys, pygame
-import easygui as gui
 from pygame.locals import *
 
 from chessboard import *
