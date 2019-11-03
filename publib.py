@@ -1,28 +1,99 @@
 #--coding:utf-8--
 
+import random, time, threading
 import pygame
 import socket
-import random
 
-# 寻找玩家
-def get_server(port=9091):
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    sock.settimeout(0.1)
+# 定义网络类，
+class Network():
+    def __init__(self):
+        self.port = 0
+        self.sock = None
+        self.remote = None
+        self.recv_msg = {}
+        self.receiver = None
+        self.running = False
 
-    msg = '天王盖地虎'
-    for _ in range(2):
-        sock.sendto(msg.encode('utf-8'), ('<broadcast>', port))
-        try:
-            data, address = sock.recvfrom(1024)
-            if data.decode('utf-8') == '宝塔镇河妖'
-                return address
-        except:
-            pygame.time.wait(random.choice((300, 400, 500, 600, 700)))
-            
-    sock.close()
-    return None
+    # 建立网络连接
+    def init(self, port=9091):
+        self.port = port
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        #self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        #self.sock.settimeout(0.1)
+        #self.sock.setblocking(False)
+        #self.sock.bind(('', self.port))
 
+        self.running = True
+        self.receiver = threading.Thread(target=self.recv_thread)
+        self.receiver.start()
+
+    def recv_thread(self):
+        self.recv_msg['sta'] = ('err', '未连接远程主机')
+
+        self.sock.settimeout(1)
+        msg = '天王盖地虎'
+        for _ in range(random.randint(1, 10)):
+            self.sock.sendto(msg.encode('utf-8'), ('<broadcast>', self.port))
+            try:
+                data, address = self.sock.recvfrom(1024)
+                print(data.decode('utf-8'))
+                if data.decode('utf-8') == '宝塔镇河妖':
+                    print('connect:', address)
+                    self.remote = address
+                    break
+            except Exception as e: #BlockingIOError:
+                print(e, type(e))
+                continue
+        
+        if not self.remote:
+            self.sock.close()
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            #self.sock.settimeout(None)  # 阻塞
+            self.sock.bind(('', self.port))
+            while True:
+                data, address = self.sock.recvfrom(1024)
+                print(data.decode('utf-8'))
+                if data.decode('utf-8') == '天王盖地虎':
+                    print('be connect:', address)
+                    data = '宝塔镇河妖'.encode('utf-8')
+                    self.sock.sendto(data, address)
+                    self.remote = address
+                    break
+        self.recv_msg['sta'] = ('ok', self.remote)
+
+        self.sock.settimeout(3.0)
+        self.sock.connect(self.remote)
+        while self.running:
+            try:
+                data = self.sock.recv(1024)
+                print(data.decode('utf-8'))
+                if data.decode('utf-8') == 'hello?':
+                    self.recv_msg['sta'] = ('ok', 'nothing')
+                    data = 'fine!'.encode('utf-8')
+                    self.sock.send(data)
+            except Exception as e:
+                print(e, type(e))
+                data = 'hello?'.encode('utf-8')
+                self.sock.send(data)
+                try:
+                    data = self.sock.recv(1024)
+                    if data.decode('utf-8') != 'fine!':
+                        self.recv_msg['sta'] = ('err', '远程主机无应答')
+                except:
+                    self.recv_msg['sta'] = ('err', '远程主机无应答')
+                continue
+            print(self.recv_msg['sta'])
+            self.recv_msg['rec'] = data.decode('utf-8')
+        
+        self.remote = None
+        self.sock.close()
+                        
+
+
+
+    
 
 # 询问框
 def query_box(msg, wnd, f_name=None, f_color=None, f_size=None):

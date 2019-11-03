@@ -1,10 +1,14 @@
 import argparse, socket
+import time,random
 
 BUFSIZE = 65535
 
 def server(interface, port):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind((interface, port))
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    #sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind(('', port))
+    sock.sendto('test!!!'.encode('ascii'), ('<broadcast>', port))
     print('Listening for datagrams at {}'.format(sock.getsockname()))
     while True:
         data, address = sock.recvfrom(BUFSIZE)
@@ -16,16 +20,24 @@ def server(interface, port):
 def client(network, port):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    sock.settimeout(1.5)
+    #sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    #sock.bind(('', port))
+    sock.setblocking(False)
     
     text = 'Broadcast datagram'
     sock.sendto(text.encode('ascii'), ('<broadcast>', port))
-    try:
-        data, address = sock.recvfrom(BUFSIZE)
-        text = data.decode('ascii')
-        print('The server at {} says: {!r}'.format(address, text))
-    except:
-        print('time out!')
+    for _ in range(3):
+        try:
+            time.sleep(random.randint(1, 10)/10)
+            data, address = sock.recvfrom(BUFSIZE)
+            text = data.decode('ascii')
+            print('The server at {} says: {!r}'.format(address, text))
+        except BlockingIOError as e:
+            print('time out!', e)
+            continue
+        finally:
+            print('finally')
+
     sock.close()
 
 

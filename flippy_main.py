@@ -78,4 +78,9 @@ def main():
 
 # 游戏入口
 if __name__ == '__main__':
-    main()
+    # main()
+    net = Network()
+    net.init()
+
+    input()
+
