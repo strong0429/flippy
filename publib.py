@@ -40,7 +40,6 @@ class Network():
                     self.remote = address
                     break
             except Exception as e: #BlockingIOError:
-                print(e, type(e))
                 continue
 
         if not self.remote:
@@ -63,6 +62,7 @@ class Network():
         while self.running:
             try:
                 data = self.sock.recv(1024).decode('utf-8')
+                print(data)
             except:
                 data = 'inf:hello!'.encode('utf-8')
                 self.sock.send(data)
