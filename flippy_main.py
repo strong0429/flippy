@@ -83,4 +83,5 @@ if __name__ == '__main__':
     net.init()
 
     input()
+    net.close()
 

@@ -15,85 +15,101 @@ class Network():
         self.running = False
 
     # 建立网络连接
-    def init(self, port=9091):
+    def start(self, port=9091):
         self.port = port
+        self.receiver = threading.Thread(target=self.recv_thread, daemon=True)
+        self.receiver.start()
+        self.running = True
+
+        self.recv_msg['sta'] = '未连接'
+
+    def recv_thread(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         #self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        #self.sock.settimeout(0.1)
         #self.sock.setblocking(False)
-        #self.sock.bind(('', self.port))
+        self.sock.settimeout(0.5)
 
-        self.running = True
-        self.receiver = threading.Thread(target=self.recv_thread)
-        self.receiver.start()
-
-    def recv_thread(self):
-        self.recv_msg['sta'] = ('err', '未连接远程主机')
-
-        self.sock.settimeout(1)
-        msg = '天王盖地虎'
-        for _ in range(random.randint(1, 10)):
+        msg = 'inf:天王盖地虎'
+        for _ in range(random.randint(1, 5)):
             self.sock.sendto(msg.encode('utf-8'), ('<broadcast>', self.port))
             try:
                 data, address = self.sock.recvfrom(1024)
-                print(data.decode('utf-8'))
-                if data.decode('utf-8') == '宝塔镇河妖':
-                    print('connect:', address)
+                if data.decode('utf-8') == 'rep:宝塔镇河妖':
+                    print('find host at:', address)
                     self.remote = address
                     break
             except Exception as e: #BlockingIOError:
                 print(e, type(e))
                 continue
-        
+
         if not self.remote:
             self.sock.close()
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-            #self.sock.settimeout(None)  # 阻塞
             self.sock.bind(('', self.port))
+            self.sock.settimeout(None)
             while True:
                 data, address = self.sock.recvfrom(1024)
                 print(data.decode('utf-8'))
-                if data.decode('utf-8') == '天王盖地虎':
+                if data.decode('utf-8') == 'inf:天王盖地虎':
                     print('be connect:', address)
-                    data = '宝塔镇河妖'.encode('utf-8')
+                    data = 'rep:宝塔镇河妖'.encode('utf-8')
                     self.sock.sendto(data, address)
                     self.remote = address
                     break
-        self.recv_msg['sta'] = ('ok', self.remote)
+        self.recv_msg['sta'] = 'ok'
 
-        self.sock.settimeout(3.0)
+        self.sock.settimeout(1.0)
         self.sock.connect(self.remote)
         while self.running:
             try:
-                data = self.sock.recv(1024)
-                print(data.decode('utf-8'))
-                if data.decode('utf-8') == 'hello?':
-                    self.recv_msg['sta'] = ('ok', 'nothing')
-                    data = 'fine!'.encode('utf-8')
-                    self.sock.send(data)
-            except Exception as e:
-                print(e, type(e))
-                data = 'hello?'.encode('utf-8')
+                data = self.sock.recv(1024).decode('utf-8')
+            except:
+                data = 'inf:hello!'.encode('utf-8')
                 self.sock.send(data)
                 try:
-                    data = self.sock.recv(1024)
-                    if data.decode('utf-8') != 'fine!':
-                        self.recv_msg['sta'] = ('err', '远程主机无应答')
+                    data = self.sock.recv(1024).decode('utf-8')
+                    if data != 'rep:hello!':
+                        self.recv_msg['sta'] = '无应答'
                 except:
-                    self.recv_msg['sta'] = ('err', '远程主机无应答')
+                    self.recv_msg['sta'] = 'ok'
                 continue
-            print(self.recv_msg['sta'])
-            self.recv_msg['rec'] = data.decode('utf-8')
+
+            if data == 'inf:hello!':
+                self.recv_msg['sta'] = 'ok'
+                data = 'rep:hello!'.encode('utf-8')
+                self.sock.send(data)
+            elif data == 'inf:close':
+                self.recv_msg['sta'] = 'close'
+                self.running = False
+            elif data[:3:] == 'inf':
+                self.recv_msg['inf'] = data[4::]
+                data = 'rep' + data[3::]
+                self.sock.send(data.encode('utf-8'))
+            elif data[:3:] == 'rep':
+                self.recv_msg['rep'] = data[4::]
         
         self.remote = None
         self.sock.close()
                         
+    def send_msg(self, msg):
+        data = 'inf:' + msg
+        self.sock.send(data.encode('utf-8'))
+        for _ in range(10):
+            time.sleep(0.1)
+            if self.recv_msg['rep'] == msg:
+                self.recv_msg['rep'] = ''
+                return True
+        return False
 
+    def get_msg(self):
+        msg = self.recv_msg['inf']
+        self.recv_msg['inf'] = ''
+        return msg
 
-
-    
+    def close(self):
+        self.sock.send('inf:close'.encode('utf-8'))
+        self.running = False
 
 # 询问框
 def query_box(msg, wnd, f_name=None, f_color=None, f_size=None):
