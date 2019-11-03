@@ -52,7 +52,6 @@ class Network():
                 data, address = self.sock.recvfrom(1024)
                 print(data.decode('utf-8'))
                 if data.decode('utf-8') == 'inf:天王盖地虎':
-                    print('be connect:', address)
                     data = 'rep:宝塔镇河妖'.encode('utf-8')
                     self.sock.sendto(data, address)
                     self.remote = address
@@ -88,9 +87,10 @@ class Network():
                 self.sock.send(data.encode('utf-8'))
             elif data[:3:] == 'rep':
                 self.recv_msg['rep'] = data[4::]
-        
+
         self.remote = None
         self.sock.close()
+        print('socket closed!')
                         
     def send_msg(self, msg):
         data = 'inf:' + msg

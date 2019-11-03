@@ -80,7 +80,7 @@ def main():
 if __name__ == '__main__':
     # main()
     net = Network()
-    net.init()
+    net.start()
 
     input()
     net.close()
