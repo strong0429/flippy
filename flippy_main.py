@@ -45,6 +45,7 @@ def main():
             clock.tick(FPS)
             continue
         if stat == 'close' or stat == 'noreply':
+            print('sta: ', network.recv_msg['sta'])
             msg_box('对方退出比赛，游戏结束！', game_wnd)
             clock.tick(FPS)
             continue
@@ -80,10 +81,14 @@ def main():
                 if event.type == MOUSEBUTTONUP:
                     x, y = event.pos
                     if board.set_tile(x, y, host):
-                        network.send_msg('move:%04d,%04d' % (x, y))
+                        if not network.send_msg('move:%04d,%04d' % (x, y)):
+                            print('失败重发')
+                            network.send_msg('move:%04d,%04d' % (x, y))
                         turn = guest
             else:
-                network.send_msg('move:none')
+                if not network.send_msg('move:none'):
+                    print('失败重发')
+                    network.send_msg('move:none')
                 turn = guest
         else:
             msg = network.get_msg()
