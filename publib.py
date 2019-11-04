@@ -66,14 +66,14 @@ class Network():
             try:
                 data, address = self.sock.recvfrom(1024)
                 data = data.decode('utf-8')
-                print(data, address)
             except:
-                if time.time() - self.timeout > 5.0:
+                if time.time() - self.timeout > 7.0:
                     self.recv_msg['sta'] = 'noreply'
                 else:
                     data = 'inf:hello!'.encode('utf-8')
                     self.sock.sendto(data, self.remote)
                 continue
+
             self.timeout = time.time()
 
             if data == 'inf:hello!':
@@ -96,8 +96,8 @@ class Network():
     def send_msg(self, msg):
         data = 'inf:' + msg
         self.sock.sendto(data.encode('utf-8'), self.remote)
-        for _ in range(10):
-            time.sleep(0.1)
+        for _ in range(5):
+            time.sleep(0.2)
             if self.recv_msg['rep'] == msg:
                 self.recv_msg['rep'] = ''
                 return True
