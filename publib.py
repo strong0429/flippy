@@ -10,7 +10,9 @@ class Network():
         self.port = 0
         self.sock = None
         self.remote = None
-        self.recv_msg = {'sta':'', 'inf':'', 'rep':''}
+        self.state = None
+        self.inf_msg = {}
+        self.rep_msg = {}
         self.receiver = None
         self.running = False
         self.host = True
@@ -22,7 +24,7 @@ class Network():
         self.receiver.start()
         self.running = True
 
-        self.recv_msg['sta'] = 'connecting'
+        self.state = 'connecting'
         self.timeout = time.time()
 
     def recv_thread(self):
@@ -32,12 +34,12 @@ class Network():
         #self.sock.setblocking(False)
         self.sock.settimeout(0.5)
 
-        msg = 'inf:天王盖地虎'
+        msg = 'inf:0:天王盖地虎'
         for _ in range(random.randint(1, 5)):
             self.sock.sendto(msg.encode('utf-8'), ('<broadcast>', self.port))
             try:
                 data, address = self.sock.recvfrom(1024)
-                if data.decode('utf-8') == 'rep:宝塔镇河妖':
+                if data.decode('utf-8') == ('rep:0:宝塔镇河妖'):
                     self.remote = address
                     self.host = False
                     break
@@ -51,68 +53,76 @@ class Network():
             self.sock.settimeout(None)
             while True:
                 data, address = self.sock.recvfrom(1024)
-                if data.decode('utf-8') == 'inf:天王盖地虎':
-                    data = 'rep:宝塔镇河妖'.encode('utf-8')
+                data = data.decode('utf-8')
+                if data == 'inf:0:天王盖地虎':
+                    data = 'rep:0:宝塔镇河妖'.encode('utf-8')
                     self.sock.sendto(data, address)
                     self.remote = address
                     self.host = True
                     break
-        self.recv_msg['sta'] = 'ok'
+        self.state = 'ok'
 
         self.timeout = time.time()
-        self.sock.settimeout(3.0)
+        self.sock.settimeout(1.0)
         #self.sock.connect(self.remote)
         while self.running:
             try:
                 data, address = self.sock.recvfrom(1024)
                 data = data.decode('utf-8')
             except:
-                if time.time() - self.timeout > 7.0:
-                    self.recv_msg['sta'] = 'noreply'
-                else:
-                    data = 'inf:hello!'.encode('utf-8')
+                if (time.time() - self.timeout)%6 > 5.0:
+                    data = 'inf:0:hello!'.encode('utf-8')
                     self.sock.sendto(data, self.remote)
+                elif (time.time() - self.timeout)/5 > 2.0:
+                    self.state = 'noreply'
                 continue
 
             self.timeout = time.time()
+            self.state = 'ok'
 
-            if data == 'inf:hello!':
-                self.recv_msg['sta'] = 'ok'
-                data = 'rep:hello!'.encode('utf-8')
-                self.sock.sendto(data, self.remote)
-            elif data == 'inf:close':
-                self.recv_msg['sta'] = 'close'
-                self.running = False
-            elif data[:3:] == 'inf':
-                self.recv_msg['inf'] = data[4::]
-                data = 'rep' + data[3::]
-                self.sock.sendto(data.encode('utf-8'), self.remote)
-            elif data[:3:] == 'rep':
-                self.recv_msg['rep'] = data[4::]
+            data = data.split(':')
+            if data[0] == 'inf':
+                if data[2] == 'hello!':
+                    self.state = 'ok'
+                    data = 'rep:0:hello!'.encode('utf-8')
+                    self.sock.sendto(data, self.remote)
+                elif data[2] == 'close':
+                    self.state = 'close'
+                    self.running = False
+                else:
+                    self.inf_msg[data[1]] = data[2]
+                    data = 'rep:{}:{}'.format(data[1], data[2])
+                    self.sock.sendto(data.encode('utf-8'), self.remote)
+            elif data[0] == 'rep':
+                self.rep_msg[data[1]] = data[2]
 
         self.remote = None
         self.sock.close()
                         
     def send_msg(self, msg):
-        data = 'inf:' + msg
+        id = str(random.random())
+        data = 'inf:{}:{}'.format(id, msg)
         self.sock.sendto(data.encode('utf-8'), self.remote)
         for _ in range(5):
-            time.sleep(0.2)
-            if self.recv_msg['rep'] == msg:
-                self.recv_msg['rep'] = ''
-                return True
-        return False
+            if id not in self.rep_msg:
+                time.sleep(0.25)
+                continue
+            if self.rep_msg[id] == msg:
+                return self.rep_msg.pop(id)
+        return None
 
     def get_msg(self):
-        msg = self.recv_msg['inf']
-        self.recv_msg['inf'] = ''
-        return msg
+        try:
+            item = self.inf_msg.popitem()
+        except:
+            return None
+        return item
 
     def get_stat(self):
-        return self.recv_msg['sta']
+        return self.state
 
     def close(self):
-        self.sock.sendto('inf:close'.encode('utf-8'), self.remote)
+        self.sock.sendto('inf:0:close'.encode('utf-8'), self.remote)
         self.running = False
 
 # 消息框

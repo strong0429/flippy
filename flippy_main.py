@@ -45,7 +45,6 @@ def main():
             clock.tick(FPS)
             continue
         if stat == 'close' or stat == 'noreply':
-            print('sta: ', network.recv_msg['sta'])
             msg_box('对方退出比赛，游戏结束！', game_wnd)
             clock.tick(FPS)
             continue
@@ -54,7 +53,7 @@ def main():
             host = random.choice(['W', 'B'])
             guest = ['W', 'B'][host=='W']
             turn = random.choice(['W', 'B'])
-            network.send_msg('host:%s;guest:%s;turn:%s' % (guest, host, turn))
+            network.send_msg('host,%s;guest,%s;turn,%s' % (guest, host, turn))
             clock.tick(FPS)
             continue
         elif not (host and guest and turn):
@@ -62,6 +61,7 @@ def main():
             if not msg:
                 clock.tick(FPS)
                 continue
+            msg = msg[1]
             host, guest, turn = msg[5], msg[13], msg[-1]
         
         if not board.check_valid():
@@ -81,23 +81,21 @@ def main():
                 if event.type == MOUSEBUTTONUP:
                     x, y = event.pos
                     if board.set_tile(x, y, host):
-                        if not network.send_msg('move:%04d,%04d' % (x, y)):
-                            print('失败重发')
-                            network.send_msg('move:%04d,%04d' % (x, y))
+                        if not network.send_msg('move,%04d,%04d' % (x, y)):
+                            print('send msg fail !!')
                         turn = guest
             else:
-                if not network.send_msg('move:none'):
-                    print('失败重发')
-                    network.send_msg('move:none')
+                if not network.send_msg('move,none'):
+                    print('send msg fail !!')
                 turn = guest
         else:
             msg = network.get_msg()
-            if msg and 'move' in msg:
+            if msg and 'move' in msg[1]:
                 turn = host
                 board.get_valid_cells(guest)
-                if 'none' not in msg:
-                    x = int(msg[5:9:])
-                    y = int(msg[10:14:])
+                if 'none' not in msg[1]:
+                    x = int(msg[1][5:9:])
+                    y = int(msg[1][10:14:])
                     board.set_tile(x, y, guest)
         pygame.event.clear()
 
