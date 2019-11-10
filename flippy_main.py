@@ -82,14 +82,18 @@ def main():
                     x, y = event.pos
                     if board.set_tile(x, y, host):
                         if not network.send_msg('move,%04d,%04d' % (x, y)):
-                            print('send msg fail !!')
+                            #print('send msg fail !!')
+                            pass
                         turn = guest
             else:
                 if not network.send_msg('move,none'):
-                    print('send msg fail !!')
+                    #print('send msg fail !!')
+                    pass
                 turn = guest
         else:
             msg = network.get_msg()
+            if msg:
+                print('<--', msg)
             if msg and 'move' in msg[1]:
                 turn = host
                 board.get_valid_cells(guest)

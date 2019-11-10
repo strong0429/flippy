@@ -17,6 +17,9 @@ class Network():
         self.running = False
         self.host = True
 
+        self.msg_id = 0
+        self.tmp_id = []
+
     # 建立网络连接
     def start(self, port=9091):
         self.port = port
@@ -63,7 +66,7 @@ class Network():
         self.state = 'ok'
 
         self.timeout = time.time()
-        self.sock.settimeout(1.0)
+        self.sock.settimeout(0.5)
         #self.sock.connect(self.remote)
         while self.running:
             try:
@@ -90,7 +93,9 @@ class Network():
                     self.state = 'close'
                     self.running = False
                 else:
-                    self.inf_msg[data[1]] = data[2]
+                    if data[1] not in self.tmp_id:
+                        self.inf_msg[data[1]] = data[2]
+                        self.tmp_id[int(data[1])%10] = data[1]
                     data = 'rep:{}:{}'.format(data[1], data[2])
                     self.sock.sendto(data.encode('utf-8'), self.remote)
             elif data[0] == 'rep':
@@ -100,15 +105,29 @@ class Network():
         self.sock.close()
                         
     def send_msg(self, msg):
-        id = str(random.random())
+        #id = str(random.random())
+        self.msg_id += 1
+        id = str(self.msg_id)
         data = 'inf:{}:{}'.format(id, msg)
+        print('-->', data)
         self.sock.sendto(data.encode('utf-8'), self.remote)
-        for _ in range(5):
+        for _ in range(10):
             if id not in self.rep_msg:
-                time.sleep(0.25)
+                time.sleep(0.1)
                 continue
             if self.rep_msg[id] == msg:
                 return self.rep_msg.pop(id)
+        #重发一次
+        print('发送失败，重发...')
+        print('-->', data)
+        self.sock.sendto(data.encode('utf-8'), self.remote)
+        for _ in range(5):
+            if id not in self.rep_msg:
+                time.sleep(0.1)
+                continue
+            if self.rep_msg[id] == msg:
+                return self.rep_msg.pop(id)
+        print('重发失败！')
         return None
 
     def get_msg(self):
