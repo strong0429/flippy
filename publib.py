@@ -18,7 +18,7 @@ class Network():
         self.host = True
 
         self.msg_id = 0
-        self.tmp_id = []
+        self.tmp_id = ['']*10
 
     # 建立网络连接
     def start(self, port=9091):
@@ -96,9 +96,12 @@ class Network():
                     if data[1] not in self.tmp_id:
                         self.inf_msg[data[1]] = data[2]
                         self.tmp_id[int(data[1])%10] = data[1]
+                    else:
+                        print('重复消息：', data[0], data[1], data[2])
                     data = 'rep:{}:{}'.format(data[1], data[2])
                     self.sock.sendto(data.encode('utf-8'), self.remote)
             elif data[0] == 'rep':
+                print(data[0], data[1], data[2])
                 self.rep_msg[data[1]] = data[2]
 
         self.remote = None
@@ -111,15 +114,14 @@ class Network():
         data = 'inf:{}:{}'.format(id, msg)
         print('-->', data)
         self.sock.sendto(data.encode('utf-8'), self.remote)
-        for _ in range(10):
+        for _ in range(5):
             if id not in self.rep_msg:
                 time.sleep(0.1)
                 continue
             if self.rep_msg[id] == msg:
                 return self.rep_msg.pop(id)
         #重发一次
-        print('发送失败，重发...')
-        print('-->', data)
+        print('重发消息：', data)
         self.sock.sendto(data.encode('utf-8'), self.remote)
         for _ in range(5):
             if id not in self.rep_msg:
