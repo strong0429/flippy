@@ -75,15 +75,12 @@ class Network():
                     if data[2] == 'close':
                         self.state = 'disconnect'
                     else:
-                        self.cmd_msg[data[1]] = data[2]
-                        data = 'ack|{}|{}'.format(data[1], data[2])
-                        self.send_msg.append(data)
-                elif data[0] == 'ack':
-                    self.ack_msg[data[1]] = data[2]
-            except:
-                if self.send_buf:
-                    msg = self.send_buf.pop(0)
-                    self.sock.sendto(msg.encode('utf-8'), self.remote)
+                        print('重复消息:', data[0], data[1], data[2])
+                    data = 'rep:{}:{}'.format(data[1], data[2])
+                    self.sock.sendto(data.encode('utf-8'), self.remote)
+            elif data[0] == 'rep':
+                print(data[0], data[1], data[2])
+                self.rep_msg[data[1]] = data[2]
 
         self.remote = None
         self.sock.close()
@@ -91,8 +88,26 @@ class Network():
     def send_msg(self, msg):
         self.msg_id += 1
         id = str(self.msg_id)
-        data = 'cmd|{}|{}'.format(id, msg)
-        self.send_buf.append(data)
+        data = 'inf:{}:{}'.format(id, msg)
+        print('-->', data)
+        self.sock.sendto(data.encode('utf-8'), self.remote)
+        for _ in range(5):
+            if id not in self.rep_msg:
+                time.sleep(0.1)
+                continue
+            if self.rep_msg[id] == msg:
+                return self.rep_msg.pop(id)
+        #重发一次
+        print('重发消息:', data)
+        self.sock.sendto(data.encode('utf-8'), self.remote)
+        for _ in range(5):
+            if id not in self.rep_msg:
+                time.sleep(0.1)
+                continue
+            if self.rep_msg[id] == msg:
+                return self.rep_msg.pop(id)
+        print('重发失败！')
+        return None
 
     def get_msg(self):
         try:
