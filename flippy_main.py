@@ -39,13 +39,8 @@ def main():
             if query_box('确认终止比赛吗？', game_wnd, f_color=(160,0,0), f_size=30):
                 break
 
-        stat = network.get_stat()
-        if stat == 'connecting':
+        if network.get_state() == 'connecting':
             msg_box('等待网络连接...', game_wnd)
-            clock.tick(FPS)
-            continue
-        if stat == 'close' or stat == 'noreply':
-            msg_box('对方退出比赛，游戏结束！', game_wnd)
             clock.tick(FPS)
             continue
 
@@ -53,7 +48,7 @@ def main():
             host = random.choice(['W', 'B'])
             guest = ['W', 'B'][host=='W']
             turn = random.choice(['W', 'B'])
-            network.send_msg('host,%s;guest,%s;turn,%s' % (guest, host, turn))
+            network.send_msg('host:%s;guest:%s;turn:%s' % (guest, host, turn))
             clock.tick(FPS)
             continue
         elif not (host and guest and turn):
@@ -81,12 +76,12 @@ def main():
                 if event.type == MOUSEBUTTONUP:
                     x, y = event.pos
                     if board.set_tile(x, y, host):
-                        if not network.send_msg('move,%04d,%04d' % (x, y)):
+                        if not network.send_msg('move:%04d,%04d' % (x, y)):
                             #print('send msg fail !!')
                             pass
                         turn = guest
             else:
-                if not network.send_msg('move,none'):
+                if not network.send_msg('move:%04d,%04d' % (-1, -1)):
                     #print('send msg fail !!')
                     pass
                 turn = guest
