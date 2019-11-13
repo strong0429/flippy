@@ -97,7 +97,11 @@ class Network():
                         self.inf_msg[data[1]] = data[2]
                         self.tmp_id[int(data[1])%10] = data[1]
                     else:
+<<<<<<< HEAD
                         print('重复消息:', data[0], data[1], data[2])
+=======
+                        print('重复消息：', data[0], data[1], data[2])
+>>>>>>> c032d6cb895980c91e62189ae09239841d666fdb
                     data = 'rep:{}:{}'.format(data[1], data[2])
                     self.sock.sendto(data.encode('utf-8'), self.remote)
             elif data[0] == 'rep':
@@ -121,7 +125,11 @@ class Network():
             if self.rep_msg[id] == msg:
                 return self.rep_msg.pop(id)
         #重发一次
+<<<<<<< HEAD
         print('重发消息:', data)
+=======
+        print('重发消息：', data)
+>>>>>>> c032d6cb895980c91e62189ae09239841d666fdb
         self.sock.sendto(data.encode('utf-8'), self.remote)
         for _ in range(5):
             if id not in self.rep_msg:
