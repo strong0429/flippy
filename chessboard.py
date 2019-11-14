@@ -101,10 +101,7 @@ class Chessboard():
                 pygame.display.update()
                 pygame.time.wait(150)
                 for row, col in self.tiles_to_flip:
-                    if self.cells[row][col] == 'W':
-                        self.cells[row][col] = 'B'
-                    elif self.cells[row][col] == 'B':
-                        self.cells[row][col] = 'W'
+                    self.cells[row][col] = ('W', 'B')[self.cells[row][col]=='W']
                     self.draw_tile(row, col)
                 self.main_wnd.blit(self.surface, self.rect)
             self.tiles_to_flip = []
