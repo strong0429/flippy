@@ -3,7 +3,6 @@
 import pygame
 import random
 
-TXT_COLOR = (150, 0, 0)
 LINE_COLOR = (200, 200, 200)
 TILE_COLOR = {'W': (255, 255, 255), 'B': (60, 60, 60)}
 
