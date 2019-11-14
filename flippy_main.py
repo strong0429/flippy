@@ -58,11 +58,11 @@ def main():
             continue
         elif not (host and guest and turn):
             msg = network.get_msg()
-            if not msg:
+            if msg and ('host' in msg[1]) and (guest in msg[1]):
+                host, guest, turn = msg[1][5], msg[1][13], msg[1][-1]
+            else:
                 clock.tick(FPS)
                 continue
-            msg = msg[1]
-            host, guest, turn = msg[5], msg[13], msg[-1]
         
         if not board.check_valid():
             result = board.tile_count()
@@ -71,7 +71,7 @@ def main():
             elif result[host] < result[guest]:
                 yes = query_box("你输了！再来一局？", game_wnd, f_size=24)
             else:
-                yes = query_box("你输了！再来一局？", game_wnd, f_size=24)
+                yes = query_box("不分伯仲！再来一局？", game_wnd, f_size=24)
             if not yes:
                 break
             board.init_cells()
@@ -81,14 +81,10 @@ def main():
                 if event.type == MOUSEBUTTONUP:
                     x, y = event.pos
                     if board.set_tile(x, y, host):
-                        if not network.send_msg('move,%04d,%04d' % (x, y)):
-                            #print('send msg fail !!')
-                            pass
+                        network.send_msg('move,%04d,%04d' % (x, y))
                         turn = guest
             else:
-                if not network.send_msg('move,none'):
-                    #print('send msg fail !!')
-                    pass
+                network.send_msg('move,none')
                 turn = guest
         else:
             msg = network.get_msg()
