@@ -144,7 +144,7 @@ class Network():
             item = self.inf_msg.popitem()
         except:
             return None
-        return item
+        return item[1]
 
     def get_stat(self):
         return self.state
