@@ -19,7 +19,6 @@ def main():
     bg_img = pygame.transform.smoothscale(bg_img, (WND_W, WND_H))
     # 显示背景
     game_wnd.blit(bg_img, (0, 0))
-    #pygame.display.update()
     # 创建网络
     network = Network()
     network.start()
@@ -51,11 +50,6 @@ def main():
             host, guest, turn = 'W', 'B', 'B'
         elif not (host and guest and turn):
             host, guest, turn = 'B', 'W', 'B'
-        # 判断比赛是否结束
-        if not board.check_valid():
-            result = board.tile_count()
-            msg_box('比赛结束！主方%d子，客方%d子。'%(result[host], result[guest]), game_wnd)
-            continue
         
         if turn == host:    #主方下子
             if board.get_valid_cells(host):
@@ -80,8 +74,15 @@ def main():
 
         game_wnd.blit(bg_img, (0, 0))
         board.draw_board()
-        tile, ishost = (host, True) if turn == host else (guest, False)
-        board.move_hint(tile, ishost)
+        
+        # 判断比赛是否结束
+        if board.check_valid():
+            tile, ishost = (host, True) if turn == host else (guest, False)
+            board.move_hint(tile, ishost)
+        else:
+            result = board.tile_count()
+            board.move_hint(host, True)
+            msg_box('比赛结束！主方%d子，客方%d子。'%(result[host], result[guest]), game_wnd)
 
     network.close()
     pygame.quit()
