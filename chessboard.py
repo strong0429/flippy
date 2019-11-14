@@ -34,13 +34,6 @@ class Chessboard():
             self.cell_size * self.cell_rows + 1)
         self.rect.center = self.main_wnd.get_rect().center
 
-        # 创建记分牌及显示字体
-        self.bb_rect = pygame.Rect(0, self.rect.y, \
-            (self.main_wnd.get_rect().w - self.rect.w)//2-20, \
-            self.rect.h)
-        self.bb_surface = pygame.Surface(self.bb_rect.size)
-        self.bb_font = pygame.font.Font('STZHONGS.TTF', 32)
-
         # 创建棋盘画布，绘制棋盘背景、网格、棋子
         self.surface = pygame.Surface(self.rect.size)
         # 加载棋盘背景图
@@ -213,37 +206,15 @@ class Chessboard():
             b_cell += cell_row.count('B')
         return {'W': w_cell, 'B': b_cell}
 
-    # 更新记分牌
-    def bb_draw(self, tile, x, capt):
-        # 重绘记分牌
-        self.bb_surface.fill((200, 200, 200))
-        rect = pygame.Rect(1, 1, self.bb_rect.w - 2, self.bb_rect.h - 2)
-        pygame.draw.rect(self.bb_surface, (128,128,128), rect, 2)
-
-        # 绘制棋子
-        tile_x = self.bb_rect.w // 2
-        tile_y = self.bb_rect.h // 6
-        pygame.draw.circle(self.bb_surface, TILE_COLOR[tile], (tile_x, tile_y), 30)
-
-        # 打印得分
-        tile_count = self.tile_count()[tile]
-        txt_img = self.bb_font.render(str(tile_count), True, TXT_COLOR)
-        txt_rect = txt_img.get_rect()
-        txt_rect.center = (self.bb_rect.w // 2, self.bb_rect.h // 2)
-        self.bb_surface.blit(txt_img, txt_rect)
-
-        # 打印标题
-        txt_img = self.bb_font.render(capt, True, TXT_COLOR)
-        txt_rect = txt_img.get_rect()
-        txt_rect.center = (self.bb_rect.w // 2, self.bb_rect.h // 6 * 5)
-        self.bb_surface.blit(txt_img, txt_rect)
-
-        self.bb_rect.x = x
-        self.main_wnd.blit(self.bb_surface, self.bb_rect)
-
-    def bb_update(self, host, guest):
-        bb_x = 10
-        self.bb_draw(host, bb_x, '己方')
-        bb_x = self.rect.right + 10
-        self.bb_draw(guest, bb_x, '友方')
+    # 走子提示
+    def move_hint(self, tile, host):
+        rect_wnd = self.main_wnd.get_rect()
+        rect_chd = self.surface.get_rect()
+        r = (rect_wnd.w - rect_chd.w) // 8
+        if host:
+            x = r * 2
+        else:
+            x = r * 2 + rect_chd.right 
+        y = rect_wnd.centery
+        pygame.draw.circle(self.main_wnd, TILE_COLOR[tile], (x, y), r)
 

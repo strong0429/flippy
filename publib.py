@@ -88,7 +88,6 @@ class Network():
                         self.send_buf.append(data.encode('utf-8'))
                         #self.sock.sendto(data.encode('utf-8'), self.remote)
                 elif data[0] == 'rep':
-                    print(data[0], data[1], data[2])
                     self.rep_msg[data[1]] = data[2]
 
                 self.state = 'ok'
@@ -182,7 +181,7 @@ def msg_box(msg, wnd, f_name=None, f_color=None, f_size=None):
     box_surface.blit(msg_img, msg_rect)
     box_rect.center = wnd.get_rect().center
     wnd.blit(box_surface, box_rect)
-    pygame.display.flip()
+    #pygame.display.flip()
 
 # 询问框
 def query_box(msg, wnd, f_name=None, f_color=None, f_size=None, yes=' Yes ', no=' No '):

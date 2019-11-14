@@ -1,13 +1,10 @@
 # Flippy游戏主程序文件
-
-import sys, pygame, time
+import sys, pygame
 from pygame.locals import *
-
 from chessboard import *
 from publib import *
 
 FPS = 15    # 每秒刷新屏幕的次数
-NETWORK = False # 是否联网
 WND_W, WND_H = 640, 480 # 游戏窗口的宽、高
 
 # 游戏主程序入口函数
@@ -22,7 +19,7 @@ def main():
     bg_img = pygame.transform.smoothscale(bg_img, (WND_W, WND_H))
     # 显示背景
     game_wnd.blit(bg_img, (0, 0))
-    pygame.display.update()
+    #pygame.display.update()
     # 创建网络
     network = Network()
     network.start()
@@ -33,6 +30,9 @@ def main():
     clock = pygame.time.Clock()
     pygame.event.clear()    # 清空消息队列
     while True:
+        pygame.display.update()
+        clock.tick(FPS)
+
         # 检查QUIT事件
         event = pygame.event.poll()
         if event.type == QUIT:
@@ -42,11 +42,9 @@ def main():
         stat = network.get_stat()
         if stat == 'connecting':
             msg_box('等待网络连接...', game_wnd)
-            clock.tick(FPS)
             continue
         if stat == 'close' or stat == 'noreply':
             msg_box('对方退出比赛，游戏结束！', game_wnd)
-            clock.tick(FPS)
             continue
         # 确定主、客方及轮次
         if not (host and guest and turn) and network.host:
@@ -57,7 +55,6 @@ def main():
         if not board.check_valid():
             result = board.tile_count()
             msg_box('比赛结束！主方%d子，客方%d子。'%(result[host], result[guest]), game_wnd)
-            clock.tick(FPS)
             continue
         
         if turn == host:    #主方下子
@@ -82,10 +79,9 @@ def main():
         pygame.event.clear()
 
         game_wnd.blit(bg_img, (0, 0))
-        board.bb_update(host, guest)
+        tile, ishost = (host, True) if turn == host else (guest, False)
+        board.move_hint(tile, ishost)
         board.draw_board()
-        pygame.display.update()
-        clock.tick(FPS)
 
     network.close()
     pygame.quit()
