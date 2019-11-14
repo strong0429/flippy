@@ -208,13 +208,11 @@ class Chessboard():
 
     # 走子提示
     def move_hint(self, tile, host):
-        rect_wnd = self.main_wnd.get_rect()
-        rect_chd = self.surface.get_rect()
-        r = (rect_wnd.w - rect_chd.w) // 8
+        r = (self.main_wnd.get_rect().w - self.rect.w) // 8
         if host:
             x = r * 2
         else:
-            x = r * 2 + rect_chd.right 
-        y = rect_wnd.centery
+            x = r * 2 + self.rect.right 
+        y = self.rect.centery
         pygame.draw.circle(self.main_wnd, TILE_COLOR[tile], (x, y), r)
 

@@ -79,9 +79,9 @@ def main():
         pygame.event.clear()
 
         game_wnd.blit(bg_img, (0, 0))
+        board.draw_board()
         tile, ishost = (host, True) if turn == host else (guest, False)
         board.move_hint(tile, ishost)
-        board.draw_board()
 
     network.close()
     pygame.quit()
