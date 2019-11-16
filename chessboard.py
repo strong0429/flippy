@@ -73,6 +73,9 @@ class Chessboard():
         self.cells[startx + 1][starty] = 'B'
         self.cells[startx + 1][starty + 1] = 'W'
 
+        self.get_valid_cells('W')
+        self.get_valid_cells('B')
+        
     def draw_tile(self, row, col):
         # 确定棋子圆心坐标
         circlex = self.cell_size * col + self.cell_size // 2
