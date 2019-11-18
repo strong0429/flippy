@@ -82,7 +82,17 @@ def main():
         else:
             result = board.tile_count()
             board.move_hint(host, True)
-            msg_box('比赛结束！主方%d子，客方%d子。'%(result[host], result[guest]), game_wnd)
+            if result[host] > result[guest]:
+                msg = '主方胜！主方%d子, 客方%d子。再来一局？' % (result[host], result[guest])
+            elif result[guest] == result[host]:
+                msg = '平局！主方%d子, 客方%d子。再来一局？' % (result[host], result[guest])
+            else:
+                msg = '客方胜！主方%d子, 客方%d子。再来一局？' % (result[host], result[guest])
+            if query_box(msg, game_wnd):
+                host, guest, turn = '', '', ''
+                board.init_cells()
+            else:
+                break
 
     network.close()
     pygame.quit()
